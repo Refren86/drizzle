@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   boolean,
   integer,
@@ -69,4 +70,57 @@ export const postsToCategoriesTable = pgTable(
   (table) => ({
     pk: primaryKey({ columns: [table.categoryId, table.postId] }), // composite primary key
   })
+);
+
+// RELATIONS
+
+export const userTableRelations = relations(usersTable, ({ one, many }) => {
+  return {
+    preferences: one(userPreferencesTable),
+    posts: many(postTable),
+  };
+});
+
+export const userPreferencesTableRelations = relations(
+  userPreferencesTable,
+  ({ one }) => {
+    return {
+      user: one(usersTable, {
+        fields: [userPreferencesTable.userId], // foreign key
+        references: [usersTable.id],
+      }),
+    };
+  }
+);
+
+export const postTableRelations = relations(postTable, ({ one, many }) => {
+  return {
+    author: one(usersTable, {
+      fields: [postTable.authorId],
+      references: [usersTable.id],
+    }),
+    postCategories: many(postsToCategoriesTable),
+  };
+});
+
+export const categoryTableRelations = relations(categoryTable, ({ many }) => {
+  return {
+    categoryPosts: many(postsToCategoriesTable),
+  };
+});
+
+export const postsToCategoriesTableRelations = relations(
+  postsToCategoriesTable,
+  ({ one }) => {
+    return {
+      post: one(postTable, {
+        fields: [postsToCategoriesTable.postId],
+        references: [postTable.id],
+      }),
+      category: one(categoryTable, {
+        fields: [postsToCategoriesTable.categoryId],
+        references: [categoryTable.id],
+      }),
+    };
+  }
 );
